@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.mpl.login.response.LoginRequest;
+
 public class SoapService {
 
 	private static final Logger logger = LoggerFactory.getLogger(SoapService.class);
@@ -43,7 +45,7 @@ public class SoapService {
 
     */
 
-	private static void createSoapEnvelope(SOAPMessage soapMessage) throws SOAPException {
+	private static void createSoapEnvelope(SOAPMessage soapMessage,LoginRequest request) throws SOAPException {
 		
 		logger.info("add params to soap service");
 		SOAPPart soapPart = soapMessage.getSOAPPart();
@@ -55,8 +57,8 @@ public class SoapService {
 		SOAPElement soapBodyElem = soapBody.addChildElement("login", myNamespace);
 		SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("id");
 		SOAPElement soapBodyElem2 = soapBodyElem.addChildElement("pw");
-		soapBodyElem2.addTextNode("admin");
-		soapBodyElem1.addTextNode("admin");
+		soapBodyElem2.addTextNode(request.getPw());
+		soapBodyElem1.addTextNode(request.getId());
 	}
 	
 	
@@ -71,21 +73,21 @@ public class SoapService {
 
     */
 
-	public static String callSoapWebService(String soapEndpointUrl) {
+	public static String callSoapWebService(String soapEndpointUrl,LoginRequest request) {
 		try {
 			SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
 			SOAPConnection soapConnection = soapConnectionFactory.createConnection();
 
 			logger.info("Send SOAP message");
 
-			SOAPMessage soapResponse = soapConnection.call(createSOAPRequest(), soapEndpointUrl);
+			SOAPMessage soapResponse = soapConnection.call(createSOAPRequest(request), soapEndpointUrl);
 			SOAPBody soapBody = soapResponse.getSOAPBody();
 			logger.info("finish SOAP message {}",soapResponse);
 			NodeList nodes = soapBody.getElementsByTagName("return");
 			Node node = nodes.item(0);
 			String msgContent = node != null ? node.getTextContent() : "";
 			soapConnection.close();
-			saveJsonFile(msgContent);
+			saveJsonFile(msgContent,request);
 			return msgContent;
 		} catch (Exception e) {
 			logger.error("error{}",e);
@@ -101,13 +103,13 @@ public class SoapService {
 	    * @parms:session variable para almacenar en el archivo json
 	 
 	*/
-	private static void saveJsonFile(String session) {
+	private static void saveJsonFile(String session,LoginRequest request) {
 		    JSONObject details = new JSONObject();
-	        details.put("id", "admin");
-	        details.put("pw", "admin");
+	        details.put("id", request.getId());
+	        details.put("pw", request.getPw());
 	        details.put("session", session);
 	
-	        try (FileWriter file = new FileWriter("src/main/resources/details.json")) {
+	        try (FileWriter file = new FileWriter("details.json")) {
 	        	 
 	            file.write(details.toJSONString());
 	            file.flush();
@@ -125,10 +127,10 @@ public class SoapService {
 	    * @return:SOAPMessage	 
 	 
 	*/
-	private static SOAPMessage createSOAPRequest() throws Exception {
+	private static SOAPMessage createSOAPRequest(LoginRequest request) throws Exception {
 		MessageFactory messageFactory = MessageFactory.newInstance();
 		SOAPMessage soapMessage = messageFactory.createMessage();
-		createSoapEnvelope(soapMessage);
+		createSoapEnvelope(soapMessage,request);
 		soapMessage.saveChanges();
 		return soapMessage;
 	}

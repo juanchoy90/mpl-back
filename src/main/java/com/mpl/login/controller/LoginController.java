@@ -7,10 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mpl.login.response.LoginRequest;
 import com.mpl.login.response.LoginResponse;
 import com.mpl.login.service.SoapService;
 
@@ -42,10 +45,10 @@ public class LoginController {
 	    * @parms:ResponseEntity<Object> retorna un objeto de tipo LoginResponse con los datos de sesion
 	 
 	*/
-	@GetMapping
-	public ResponseEntity<Object> getSession() {
+	@PostMapping
+	public ResponseEntity<Object> getSession(@RequestBody LoginRequest request) {
 		logger.info("Init call service soap");
-		String session=SoapService.callSoapWebService(urlSoapEndpoint);
+		String session=SoapService.callSoapWebService(urlSoapEndpoint,request);
 		LoginResponse response=new LoginResponse(session, "Operacion exitosa");
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
